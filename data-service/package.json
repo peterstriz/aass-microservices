@@ -1,0 +1,11 @@
+{
+  "name": "data-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "export": "yarn export:metadata && yarn export:database",
+    "export:metadata": "curl http://localhost:8080/v1/metadata -o metadata/hasura_metadata.json -d\"{\\\"type\\\": \\\"export_metadata\\\", \\\"args\\\": {}}\"",
+    "export:database": "curl --location --request POST \"http://localhost:8080/v1alpha1/pg_dump\" --header \"Content-Type: application/json\" --data-raw \"{ \\\"opts\\\": [\\\"-O\\\", \\\"-x\\\", \\\"--schema\\\", \\\"public\\\", \\\"--schema\\\", \\\"auth\\\"], \\\"clean_output\\\": true, \\\"source\\\": \\\"aass\\\"}\" -o metadata/database.sql"
+  }
+}

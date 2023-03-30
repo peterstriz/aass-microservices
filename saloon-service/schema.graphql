@@ -1,0 +1,499 @@
+schema {
+  query: query_root
+  mutation: mutation_root
+  subscription: subscription_root
+}
+
+"""whether this query should be cached (Hasura Cloud only)"""
+directive @cached(
+  """measured in seconds"""
+  ttl: Int! = 60
+
+  """refresh the cache entry"""
+  refresh: Boolean! = false
+) on QUERY
+
+"""ordering argument of a cursor"""
+enum CursorOrdering {
+  """ascending ordering of the cursor"""
+  ASC
+
+  """descending ordering of the cursor"""
+  DESC
+}
+
+"""
+Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'.
+"""
+input IntComparisonExp {
+  _eq: Int
+  _gt: Int
+  _gte: Int
+  _in: [Int!]
+  _isNull: Boolean
+  _lt: Int
+  _lte: Int
+  _neq: Int
+  _nin: [Int!]
+}
+
+"""column ordering options"""
+enum OrderBy {
+  """in ascending order, nulls last"""
+  ASC
+
+  """in ascending order, nulls first"""
+  ASC_NULLS_FIRST
+
+  """in ascending order, nulls last"""
+  ASC_NULLS_LAST
+
+  """in descending order, nulls first"""
+  DESC
+
+  """in descending order, nulls first"""
+  DESC_NULLS_FIRST
+
+  """in descending order, nulls last"""
+  DESC_NULLS_LAST
+}
+
+"""
+columns and relationships of "saloon"
+"""
+type Saloon {
+  id: Int!
+  name: String!
+}
+
+"""
+aggregated selection of "saloon"
+"""
+type SaloonAggregate {
+  aggregate: SaloonAggregateFields
+  nodes: [Saloon!]!
+}
+
+"""
+aggregate fields of "saloon"
+"""
+type SaloonAggregateFields {
+  avg: SaloonAvgFields
+  count(columns: [SaloonSelectColumn!], distinct: Boolean): Int!
+  max: SaloonMaxFields
+  min: SaloonMinFields
+  stddev: SaloonStddevFields
+  stddevPop: SaloonStddevPopFields
+  stddevSamp: SaloonStddevSampFields
+  sum: SaloonSumFields
+  varPop: SaloonVarPopFields
+  varSamp: SaloonVarSampFields
+  variance: SaloonVarianceFields
+}
+
+"""aggregate avg on columns"""
+type SaloonAvgFields {
+  id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "saloon". All fields are combined with a logical 'AND'.
+"""
+input SaloonBoolExp {
+  _and: [SaloonBoolExp!]
+  _not: SaloonBoolExp
+  _or: [SaloonBoolExp!]
+  id: IntComparisonExp
+  name: StringComparisonExp
+}
+
+"""
+unique or primary key constraints on table "saloon"
+"""
+enum SaloonConstraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  saloon_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "saloon"
+"""
+input SaloonIncInput {
+  id: Int
+}
+
+"""
+input type for inserting data into table "saloon"
+"""
+input SaloonInsertInput {
+  id: Int
+  name: String
+}
+
+"""aggregate max on columns"""
+type SaloonMaxFields {
+  id: Int
+  name: String
+}
+
+"""aggregate min on columns"""
+type SaloonMinFields {
+  id: Int
+  name: String
+}
+
+"""
+response of any mutation on the table "saloon"
+"""
+type SaloonMutationResponse {
+  """number of rows affected by the mutation"""
+  affectedRows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [Saloon!]!
+}
+
+"""
+on_conflict condition type for table "saloon"
+"""
+input SaloonOnConflict {
+  constraint: SaloonConstraint!
+  updateColumns: [SaloonUpdateColumn!]! = []
+  where: SaloonBoolExp
+}
+
+"""Ordering options when selecting data from "saloon"."""
+input SaloonOrderBy {
+  id: OrderBy
+  name: OrderBy
+}
+
+"""primary key columns input for table: saloon"""
+input SaloonPkColumnsInput {
+  id: Int!
+}
+
+"""
+select columns of table "saloon"
+"""
+enum SaloonSelectColumn {
+  """column name"""
+  id
+
+  """column name"""
+  name
+}
+
+"""
+input type for updating data in table "saloon"
+"""
+input SaloonSetInput {
+  id: Int
+  name: String
+}
+
+"""aggregate stddev on columns"""
+type SaloonStddevFields {
+  id: Float
+}
+
+"""aggregate stddevPop on columns"""
+type SaloonStddevPopFields {
+  id: Float
+}
+
+"""aggregate stddevSamp on columns"""
+type SaloonStddevSampFields {
+  id: Float
+}
+
+"""
+Streaming cursor of the table "saloon"
+"""
+input SaloonStreamCursorInput {
+  """Stream column input with initial value"""
+  initialValue: SaloonStreamCursorValueInput!
+
+  """cursor ordering"""
+  ordering: CursorOrdering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input SaloonStreamCursorValueInput {
+  id: Int
+  name: String
+}
+
+"""aggregate sum on columns"""
+type SaloonSumFields {
+  id: Int
+}
+
+"""
+update columns of table "saloon"
+"""
+enum SaloonUpdateColumn {
+  """column name"""
+  id
+
+  """column name"""
+  name
+}
+
+input SaloonUpdates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: SaloonIncInput
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: SaloonSetInput
+
+  """filter the rows which have to be updated"""
+  where: SaloonBoolExp!
+}
+
+"""aggregate varPop on columns"""
+type SaloonVarPopFields {
+  id: Float
+}
+
+"""aggregate varSamp on columns"""
+type SaloonVarSampFields {
+  id: Float
+}
+
+"""aggregate variance on columns"""
+type SaloonVarianceFields {
+  id: Float
+}
+
+"""
+Boolean expression to compare columns of type "String". All fields are combined with logical 'AND'.
+"""
+input StringComparisonExp {
+  _eq: String
+  _gt: String
+  _gte: String
+
+  """does the column match the given case-insensitive pattern"""
+  _ilike: String
+  _in: [String!]
+
+  """
+  does the column match the given POSIX regular expression, case insensitive
+  """
+  _iregex: String
+  _isNull: Boolean
+
+  """does the column match the given pattern"""
+  _like: String
+  _lt: String
+  _lte: String
+  _neq: String
+
+  """does the column NOT match the given case-insensitive pattern"""
+  _nilike: String
+  _nin: [String!]
+
+  """
+  does the column NOT match the given POSIX regular expression, case insensitive
+  """
+  _niregex: String
+
+  """does the column NOT match the given pattern"""
+  _nlike: String
+
+  """
+  does the column NOT match the given POSIX regular expression, case sensitive
+  """
+  _nregex: String
+
+  """does the column NOT match the given SQL regular expression"""
+  _nsimilar: String
+
+  """
+  does the column match the given POSIX regular expression, case sensitive
+  """
+  _regex: String
+
+  """does the column match the given SQL regular expression"""
+  _similar: String
+}
+
+"""mutation root"""
+type mutation_root {
+  """
+  delete data from the table: "saloon"
+  """
+  deleteSaloon(
+    """filter the rows which have to be deleted"""
+    where: SaloonBoolExp!
+  ): SaloonMutationResponse
+
+  """
+  delete single row from the table: "saloon"
+  """
+  deleteSaloonByPk(id: Int!): Saloon
+
+  """
+  insert data into the table: "saloon"
+  """
+  insertSaloon(
+    """the rows to be inserted"""
+    objects: [SaloonInsertInput!]!
+
+    """upsert condition"""
+    onConflict: SaloonOnConflict
+  ): SaloonMutationResponse
+
+  """
+  insert a single row into the table: "saloon"
+  """
+  insertSaloonOne(
+    """the row to be inserted"""
+    object: SaloonInsertInput!
+
+    """upsert condition"""
+    onConflict: SaloonOnConflict
+  ): Saloon
+
+  """
+  update data of the table: "saloon"
+  """
+  updateSaloon(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: SaloonIncInput
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: SaloonSetInput
+
+    """filter the rows which have to be updated"""
+    where: SaloonBoolExp!
+  ): SaloonMutationResponse
+
+  """
+  update single row of the table: "saloon"
+  """
+  updateSaloonByPk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: SaloonIncInput
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: SaloonSetInput
+    pkColumns: SaloonPkColumnsInput!
+  ): Saloon
+
+  """
+  update multiples rows of table: "saloon"
+  """
+  updateSaloonMany(
+    """updates to execute, in order"""
+    updates: [SaloonUpdates!]!
+  ): [SaloonMutationResponse]
+}
+
+type query_root {
+  """
+  fetch data from the table: "saloon"
+  """
+  saloon(
+    """distinct select on columns"""
+    distinctOn: [SaloonSelectColumn!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    orderBy: [SaloonOrderBy!]
+
+    """filter the rows returned"""
+    where: SaloonBoolExp
+  ): [Saloon!]!
+
+  """
+  fetch aggregated fields from the table: "saloon"
+  """
+  saloonAggregate(
+    """distinct select on columns"""
+    distinctOn: [SaloonSelectColumn!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    orderBy: [SaloonOrderBy!]
+
+    """filter the rows returned"""
+    where: SaloonBoolExp
+  ): SaloonAggregate!
+
+  """fetch data from the table: "saloon" using primary key columns"""
+  saloonByPk(id: Int!): Saloon
+}
+
+type subscription_root {
+  """
+  fetch data from the table: "saloon"
+  """
+  saloon(
+    """distinct select on columns"""
+    distinctOn: [SaloonSelectColumn!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    orderBy: [SaloonOrderBy!]
+
+    """filter the rows returned"""
+    where: SaloonBoolExp
+  ): [Saloon!]!
+
+  """
+  fetch aggregated fields from the table: "saloon"
+  """
+  saloonAggregate(
+    """distinct select on columns"""
+    distinctOn: [SaloonSelectColumn!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    orderBy: [SaloonOrderBy!]
+
+    """filter the rows returned"""
+    where: SaloonBoolExp
+  ): SaloonAggregate!
+
+  """fetch data from the table: "saloon" using primary key columns"""
+  saloonByPk(id: Int!): Saloon
+
+  """
+  fetch data from the table in a streaming manner: "saloon"
+  """
+  saloonStream(
+    """maximum number of rows returned in a single batch"""
+    batchSize: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [SaloonStreamCursorInput]!
+
+    """filter the rows returned"""
+    where: SaloonBoolExp
+  ): [Saloon!]!
+}
+

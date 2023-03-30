@@ -1,0 +1,8 @@
+{
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#452606",
+    "titleBar.activeBackground": "#603608",
+    "titleBar.activeForeground": "#FEFBF7"
+  },
+  "cSpell.words": ["Hasura"]
+}
