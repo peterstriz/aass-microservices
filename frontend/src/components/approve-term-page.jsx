@@ -17,7 +17,7 @@ const GET_SALOON = gql`
   }
 `;
 
-export function SaloonDetailPage() {
+export function ApproveTermPage() {
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [selectedServices, setSelectedServices] = useState([]);
   const [booked, setBooked] = useState(false);
@@ -65,7 +65,7 @@ export function SaloonDetailPage() {
       }}
     >
       <a href="/">Back to home</a>
-      <h1>{saloon?.name}</h1>
+      <h1>Aproove term {saloon?.name}</h1>
 
       <h2>Services</h2>
       <ul>

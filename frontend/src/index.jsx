@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import { HomePage } from './components/home-page';
 import { SaloonDetailPage } from './components/saloon-detail-page';
+import { ApproveTermPage } from './components/approve-term-page';
 
 // init axios
 axios.defaults.headers.post['Content-Type'] = 'application/json';
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
   {
     path: '/saloon/:saloonId',
     element: <SaloonDetailPage />,
+  },
+  {
+    path: '/approveTerm',
+    element: <ApproveTermPage />,
   },
 ]);
 
