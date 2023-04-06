@@ -4,9 +4,17 @@ import { SaloonList } from './saloon-list';
 
 export function HomePage() {
   return (
-    <div style={{ fontFamily: 'arial' }}>
+    <div
+      style={{
+        fontFamily: 'arial',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.5rem',
+      }}
+    >
       <button onClick={() => sendNotification()}>sendNotification()</button>
-      <h1>Saloons</h1>
+      <h1>Hair Saloons</h1>
       <SaloonList />
     </div>
   );

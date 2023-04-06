@@ -3,7 +3,7 @@ import DateTimePicker from 'react-datetime-picker';
 
 import { useQuery, gql } from '@apollo/client';
 import { useParams } from 'react-router-dom';
-
+let booked = false;
 const GET_SALOON = gql`
   query GetSaloon($id: Int!) {
     saloonByPk(id: $id) {
@@ -20,6 +20,7 @@ const GET_SALOON = gql`
 export function SaloonDetailPage() {
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [selectedServices, setSelectedServices] = useState([]);
+  const [booked, setBooked] = useState(false);
 
   const { saloonId } = useParams();
   const { loading, data } = useQuery(GET_SALOON, {
@@ -41,8 +42,12 @@ export function SaloonDetailPage() {
 
   const handleBook = () => {
     // TODO: send booking to backend
+    setBooked(true);
     console.log('selectedTime', selectedTime);
     console.log('selectedServices', selectedServices);
+    setTimeout(() => {
+      setBooked(false);
+    }, 500);
   };
 
   if (loading) return <div>Loading...</div>;
@@ -50,7 +55,15 @@ export function SaloonDetailPage() {
   const saloon = data?.saloonByPk;
 
   return (
-    <div>
+    <div
+      style={{
+        fontFamily: 'arial',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.5rem',
+      }}
+    >
       <a href="/">Back to home</a>
       <h1>{saloon?.name}</h1>
 
@@ -73,7 +86,15 @@ export function SaloonDetailPage() {
       <h2>Booking</h2>
       <DateTimePicker onChange={setSelectedTime} value={selectedTime} />
 
-      <button onClick={handleBook}>Book</button>
+      <button
+        onClick={handleBook}
+        style={{
+          background: booked ? 'green' : 'lightblue',
+          padding: 5,
+        }}
+      >
+        Book
+      </button>
     </div>
   );
 }

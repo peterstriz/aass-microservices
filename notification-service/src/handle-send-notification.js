@@ -11,7 +11,7 @@ const EMPLOYEES_QUERY = `
 `;
 
 async function sendNotification(employeeIds) {
-  console.log('Sending notification to:', employeeIds);
+  console.log('Sending notification to eployees:', employeeIds);
 }
 
 export async function handleSendNotification(req, res) {
