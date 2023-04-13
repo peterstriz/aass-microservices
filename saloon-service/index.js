@@ -2,7 +2,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
 import express from 'express';
-import { DATA_SERVICE_URL } from './src/url.js';
+import { DATA_SERVICE_URL, NOTIFICATION_SERVICE_URL } from './src/url.js';
 
 const app = express();
 const port = 3002;
@@ -68,7 +68,7 @@ app.post('/api/v1/booking/:id/confirm', (req, res) => {
     .then(({ data }) => {
       // send notification
       axios
-        .post('http://localhost:3000/api/v1/send-notification', {
+        .post(`${NOTIFICATION_SERVICE_URL}/send-notification`, {
           saloonId: data.data.updateBookingByPk.saloonId,
         })
         .then(({ data }) => {

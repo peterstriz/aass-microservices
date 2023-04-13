@@ -14,7 +14,7 @@ import { RejectedBookingPage } from './components/rejected-booking-page';
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 
 // init apollo client
-const DATA_SERVICE_URL = 'http://localhost:8080/v1/graphql';
+const DATA_SERVICE_URL = 'http://localhost:8085/v1/graphql';
 const client = new ApolloClient({
   uri: DATA_SERVICE_URL,
   cache: new InMemoryCache(),
