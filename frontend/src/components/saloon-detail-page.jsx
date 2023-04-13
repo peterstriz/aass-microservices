@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import DateTimePicker from 'react-datetime-picker';
+import axios from 'axios';
 
 import { useQuery, gql } from '@apollo/client';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const GET_SALOON = gql`
   query GetSaloon($id: Int!) {
@@ -21,6 +22,8 @@ export function SaloonDetailPage() {
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [selectedServices, setSelectedServices] = useState([]);
   const [booked, setBooked] = useState(false);
+
+  const navigate = useNavigate();
 
   const { saloonId } = useParams();
   const { loading, data } = useQuery(GET_SALOON, {
@@ -45,9 +48,18 @@ export function SaloonDetailPage() {
     setBooked(true);
     console.log('selectedTime', selectedTime);
     console.log('selectedServices', selectedServices);
-    setTimeout(() => {
-      setBooked(false);
-    }, 500);
+
+    axios
+      .post(`http://localhost:3002/api/v1/saloon/${saloonId}/book`, {
+        booking: selectedTime,
+        serviceIds: selectedServices,
+      })
+      .then(({ data }) => {
+        navigate(`/confirm-booking/${data.id}`);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   if (loading) return <div>Loading...</div>;

@@ -6,7 +6,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import { HomePage } from './components/home-page';
 import { SaloonDetailPage } from './components/saloon-detail-page';
-import { ApproveTermPage } from './components/approve-term-page';
+import { ApprovedBookingPage } from './components/approved-booking-page';
+import { ApproveBookingPage } from './components/approve-booking-page';
+import { RejectedBookingPage } from './components/rejected-booking-page';
 
 // init axios
 axios.defaults.headers.post['Content-Type'] = 'application/json';
@@ -29,8 +31,16 @@ const router = createBrowserRouter([
     element: <SaloonDetailPage />,
   },
   {
-    path: '/approveTerm',
-    element: <ApproveTermPage />,
+    path: '/booking-success',
+    element: <ApprovedBookingPage />,
+  },
+  {
+    path: '/booking-rejected',
+    element: <RejectedBookingPage />,
+  },
+  {
+    path: '/confirm-booking/:bookingId',
+    element: <ApproveBookingPage />,
   },
 ]);
 
