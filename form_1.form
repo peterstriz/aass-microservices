@@ -1,0 +1,47 @@
+{
+  "components": [
+    {
+      "values": [
+        {
+          "label": "Accept",
+          "value": "accepted"
+        },
+        {
+          "label": "Reject",
+          "value": "rejected"
+        }
+      ],
+      "label": "Radio",
+      "type": "radio",
+      "layout": {
+        "row": "Row_0dp1t6y",
+        "columns": null
+      },
+      "id": "Field_0gaidyn",
+      "key": "booking_status",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "action": "submit",
+      "label": "Submit",
+      "type": "button",
+      "layout": {
+        "row": "Row_1qlwolh",
+        "columns": null
+      },
+      "id": "Field_0zxks3k",
+      "key": "field_0gz0wv0"
+    }
+  ],
+  "type": "default",
+  "id": "Form_1uh6hw6",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.2.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.10.0"
+  },
+  "schemaVersion": 8
+}
