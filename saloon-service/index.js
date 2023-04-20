@@ -3,7 +3,9 @@ import cors from 'cors';
 import axios from 'axios';
 import express from 'express';
 import { DATA_SERVICE_URL } from './src/url.js';
+import { ZBClient } from 'zeebe-node';
 
+const zbc = new ZBClient();
 const app = express();
 const port = 3002;
 
@@ -14,8 +16,8 @@ app.get('/api/v1/ping', (_, res) => {
   res.status(200).end();
 });
 
-app.post('/api/v1/saloon/:id/book', (req, res) => {
-  const { id } = req.params;
+app.post('/api/v1/saloon/book', (req, res) => {
+  const { id } = req.query;
   const { serviceIds, booking } = req.body;
 
   const CREATE_BOOKING_QUERY = `
@@ -23,7 +25,7 @@ app.post('/api/v1/saloon/:id/book', (req, res) => {
       insertBooking(
         objects: {
           date: "${booking}"
-          status: "open"
+          status: "created"
           saloonId: ${id}
           serviceIds: "${serviceIds.map((id) => id).join(',')}"
         }
@@ -39,8 +41,15 @@ app.post('/api/v1/saloon/:id/book', (req, res) => {
     .post(DATA_SERVICE_URL, {
       query: CREATE_BOOKING_QUERY,
     })
-    .then((response) => {
-      res.json({ id: response.data?.data?.insertBooking?.returning?.[0]?.id });
+    .then(async (response) => {
+      const bookingId = response.data?.data?.insertBooking?.returning?.[0]?.id;
+
+      const outcome = await zbc.createProcessInstanceWithResult('new-booking', {
+        bookingId,
+        date: booking,
+      });
+
+      res.json({ outcome, bookingId });
     })
     .catch((error) => {
       res.status(400).end();
@@ -48,8 +57,8 @@ app.post('/api/v1/saloon/:id/book', (req, res) => {
     });
 });
 
-app.post('/api/v1/booking/:id/confirm', (req, res) => {
-  const { id } = req.params;
+app.post('/api/v1/booking/confirm', (req, res) => {
+  const { id } = req.query;
 
   const CONFIRM_BOOKING_QUERY = `
       mutation ConfirmBookingMutation {
@@ -74,8 +83,8 @@ app.post('/api/v1/booking/:id/confirm', (req, res) => {
     });
 });
 
-app.post('/api/v1/booking/:id/reject', (req, res) => {
-  const { id } = req.params;
+app.post('/api/v1/booking/reject', (req, res) => {
+  const { id } = req.query;
 
   const REJECT_BOOKING_QUERY = `
         mutation RejectBookingMutation {
@@ -98,8 +107,8 @@ app.post('/api/v1/booking/:id/reject', (req, res) => {
     });
 });
 
-app.post('/api/v1/booking/:id/verify', (req, res) => {
-  const { id } = req.params;
+app.post('/api/v1/booking/verify', (req, res) => {
+  const { id } = req.query;
   const { date } = req.body;
 
   // compare two dates
