@@ -16,8 +16,8 @@ app.get('/api/v1/ping', (_, res) => {
   res.status(200).end();
 });
 
-app.post('/api/v1/saloon/book', (req, res) => {
-  const { id } = req.query;
+app.post('/api/v1/saloon/:id/book', (req, res) => {
+  const { id } = req.params;
   const { serviceIds, booking } = req.body;
 
   const CREATE_BOOKING_QUERY = `
