@@ -107,37 +107,49 @@ app.post('/api/v1/booking/reject', (req, res) => {
     });
 });
 
-app.post('/api/v1/booking/verify', (req, res) => {
-  const { id } = req.query;
-  const { date } = req.body;
+const verifyWorker = zbc.createWorker({
+  taskType: 'verify-booking',
+  taskHandler: async (job) => {
+    const { id, date } = job.variables;
 
-  // compare two dates
-  const today = new Date();
-  const bookingDate = new Date(date);
-  if (today > bookingDate) {
-    res.status(400).json({ valid: false });
-    return;
-  }
+    verifyWorker.log('Verifying booking', id);
 
-  const VERIFY_BOOKING_QUERY = `
-    mutation VerifyBookingMutation {
-      updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "verified"}) {
-        id
-      }
+    // compare two dates
+    const today = new Date();
+    const bookingDate = new Date(date);
+    if (today > bookingDate) {
+      return job.complete({
+        valid: false,
+      });
     }
-  `;
 
-  axios
-    .post(DATA_SERVICE_URL, {
-      query: VERIFY_BOOKING_QUERY,
-    })
-    .then(() => {
-      res.json({ valid: true });
-    })
-    .catch((error) => {
-      res.status(400).json({ valid: false });
-      console.log(error);
-    });
+    const VERIFY_BOOKING_QUERY = `
+      mutation VerifyBookingMutation {
+        updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "verified"}) {
+          id
+        }
+      }
+    `;
+
+    return await axios
+      .post(DATA_SERVICE_URL, {
+        query: VERIFY_BOOKING_QUERY,
+      })
+      .then(() => {
+        return job.complete({
+          valid: true,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+
+        verifyWorker.log(error);
+
+        return job.complete({
+          valid: false,
+        });
+      });
+  },
 });
 
 app.listen(port, () => {
