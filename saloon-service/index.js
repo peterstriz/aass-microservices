@@ -57,10 +57,12 @@ app.post('/api/v1/saloon/book', (req, res) => {
     });
 });
 
-app.post('/api/v1/booking/confirm', (req, res) => {
-  const { id } = req.query;
+const confirmWorker = zbc.createWorker({
+  taskType: 'confirm-booking',
+  taskHandler: async (job) => {
+    const { id } = job.variables;
 
-  const CONFIRM_BOOKING_QUERY = `
+    const CONFIRM_BOOKING_QUERY = `
       mutation ConfirmBookingMutation {
         updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "approved"}) {
           id
@@ -69,24 +71,30 @@ app.post('/api/v1/booking/confirm', (req, res) => {
       }
     `;
 
-  // update booking state
-  axios
-    .post(DATA_SERVICE_URL, {
-      query: CONFIRM_BOOKING_QUERY,
-    })
-    .then(() => {
-      res.end();
-    })
-    .catch((error) => {
-      res.status(400).end();
-      console.log(error);
-    });
+    // update booking state
+    return await axios
+      .post(DATA_SERVICE_URL, {
+        query: CONFIRM_BOOKING_QUERY,
+      })
+      .then(() => {
+        return job.complete();
+      })
+      .catch((error) => {
+        console.log(error);
+
+        confirmWorker.log(error);
+
+        return job.error();
+      });
+  },
 });
 
-app.post('/api/v1/booking/reject', (req, res) => {
-  const { id } = req.query;
+const rejectWorker = zbc.createWorker({
+  taskType: 'reject-booking',
+  taskHandler: async (job) => {
+    const { id } = job.variables;
 
-  const REJECT_BOOKING_QUERY = `
+    const REJECT_BOOKING_QUERY = `
         mutation RejectBookingMutation {
           updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "rejected"}) {
             id
@@ -94,17 +102,21 @@ app.post('/api/v1/booking/reject', (req, res) => {
         }
       `;
 
-  axios
-    .post(DATA_SERVICE_URL, {
-      query: REJECT_BOOKING_QUERY,
-    })
-    .then(() => {
-      res.end();
-    })
-    .catch((error) => {
-      res.status(400).end();
-      console.log(error);
-    });
+    return await axios
+      .post(DATA_SERVICE_URL, {
+        query: REJECT_BOOKING_QUERY,
+      })
+      .then(() => {
+        return job.complete();
+      })
+      .catch((error) => {
+        console.log(error);
+
+        rejectWorker.log(error);
+
+        return job.error();
+      });
+  },
 });
 
 const verifyWorker = zbc.createWorker({
@@ -145,7 +157,7 @@ const verifyWorker = zbc.createWorker({
 
         verifyWorker.log(error);
 
-        return job.complete({
+        return job.error({
           valid: false,
         });
       });

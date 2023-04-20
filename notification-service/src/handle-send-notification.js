@@ -40,10 +40,10 @@ async function sendNotification(employeeIds) {
   return nodemailer.getTestMessageUrl(info);
 }
 
-export async function handleSendNotification(req, res) {
-  const saloonId = req.body.saloonId;
+export async function handleSendNotification(job) {
+  const { saloonId } = job.variables;
 
-  axios
+  return await axios
     .post(DATA_SERVICE_URL, {
       query: EMPLOYEES_QUERY,
       variables: { saloonId },
@@ -53,10 +53,13 @@ export async function handleSendNotification(req, res) {
 
       const emailUrl = await sendNotification(employeeIds);
 
-      res.send(emailUrl);
+      return job.complete({
+        emailUrl,
+      });
     })
     .catch((error) => {
       console.log(error);
-      res.status(500).end();
+
+      return job.error();
     });
 }

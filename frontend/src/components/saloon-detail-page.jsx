@@ -44,7 +44,6 @@ export function SaloonDetailPage() {
   };
 
   const handleBook = () => {
-    // TODO: send booking to backend
     setBooked(true);
     console.log('selectedTime', selectedTime);
     console.log('selectedServices', selectedServices);
@@ -55,7 +54,8 @@ export function SaloonDetailPage() {
         serviceIds: selectedServices,
       })
       .then(({ data }) => {
-        navigate(`/confirm-booking/${data.id}`);
+        window.open(data, '_blank');
+        navigate(`/booking-success`);
       })
       .catch((error) => {
         console.log(error);
