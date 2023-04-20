@@ -46,6 +46,7 @@ app.post('/api/v1/saloon/:id/book', (req, res) => {
 
       const outcome = await zbc.createProcessInstanceWithResult('new-booking', {
         bookingId,
+        saloonId: id,
         date: booking,
       });
 
