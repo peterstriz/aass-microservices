@@ -2,7 +2,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
 import express from 'express';
-import { DATA_SERVICE_URL, NOTIFICATION_SERVICE_URL } from './src/url.js';
+import { DATA_SERVICE_URL } from './src/url.js';
 
 const app = express();
 const port = 3002;
@@ -65,15 +65,8 @@ app.post('/api/v1/booking/:id/confirm', (req, res) => {
     .post(DATA_SERVICE_URL, {
       query: CONFIRM_BOOKING_QUERY,
     })
-    .then(({ data }) => {
-      // send notification
-      axios
-        .post(`${NOTIFICATION_SERVICE_URL}/send-notification`, {
-          saloonId: data.data.updateBookingByPk.saloonId,
-        })
-        .then(({ data }) => {
-          res.end(data);
-        });
+    .then(() => {
+      res.end();
     })
     .catch((error) => {
       res.status(400).end();
@@ -101,6 +94,39 @@ app.post('/api/v1/booking/:id/reject', (req, res) => {
     })
     .catch((error) => {
       res.status(400).end();
+      console.log(error);
+    });
+});
+
+app.post('/api/v1/booking/:id/verify', (req, res) => {
+  const { id } = req.params;
+  const { date } = req.body;
+
+  // compare two dates
+  const today = new Date();
+  const bookingDate = new Date(date);
+  if (today > bookingDate) {
+    res.status(400).json({ valid: false });
+    return;
+  }
+
+  const VERIFY_BOOKING_QUERY = `
+    mutation VerifyBookingMutation {
+      updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "verified"}) {
+        id
+      }
+    }
+  `;
+
+  axios
+    .post(DATA_SERVICE_URL, {
+      query: VERIFY_BOOKING_QUERY,
+    })
+    .then(() => {
+      res.json({ valid: true });
+    })
+    .catch((error) => {
+      res.status(400).json({ valid: false });
       console.log(error);
     });
 });
