@@ -3,7 +3,7 @@ import cors from 'cors';
 import axios from 'axios';
 import express from 'express';
 import { DATA_SERVICE_URL } from './src/url.js';
-import { ZBClient } from 'zeebe-node';
+import { Duration, ZBClient } from 'zeebe-node';
 
 const zbc = new ZBClient();
 const app = express();
@@ -44,10 +44,14 @@ app.post('/api/v1/saloon/:id/book', (req, res) => {
     .then(async (response) => {
       const bookingId = response.data?.data?.insertBooking?.returning?.[0]?.id;
 
-      const outcome = await zbc.createProcessInstanceWithResult('new-booking', {
-        bookingId,
-        saloonId: id,
-        date: booking,
+      const outcome = await zbc.createProcessInstanceWithResult({
+        bpmnProcessId: 'new-booking',
+        requestTimeout: Duration.seconds.of(120),
+        variables: {
+          bookingId,
+          saloonId: id,
+          date: booking,
+        },
       });
 
       res.json({ outcome, bookingId });
