@@ -35,13 +35,13 @@ async function sendNotification(employeeIds) {
     text: 'Your booking has been accepted', // plain text body
   });
 
-  console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+  // console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
 
   return nodemailer.getTestMessageUrl(info);
 }
 
-export async function handleSendNotification(job) {
-  const { saloonId } = job.variables;
+export async function handleSendNotification({ message, topic }) {
+  const { saloonId } = JSON.parse(message.value.toString());
 
   return await axios
     .post(DATA_SERVICE_URL, {
@@ -53,13 +53,11 @@ export async function handleSendNotification(job) {
 
       const emailUrl = await sendNotification(employeeIds);
 
-      return job.complete({
-        emailUrl,
-      });
+      console.log('Notification sent:', emailUrl);
+
+      return emailUrl;
     })
     .catch((error) => {
       console.log(error);
-
-      return job.error();
     });
 }

@@ -3,9 +3,16 @@ import cors from 'cors';
 import axios from 'axios';
 import express from 'express';
 import { DATA_SERVICE_URL } from './src/url.js';
-import { Duration, ZBClient } from 'zeebe-node';
+import { Kafka } from 'kafkajs';
 
-const zbc = new ZBClient();
+const kafka = new Kafka({
+  clientId: 'saloon-service',
+  brokers: ['localhost:29092'],
+});
+
+const producer = kafka.producer();
+await producer.connect();
+
 const app = express();
 const port = 3002;
 
@@ -17,16 +24,16 @@ app.get('/api/v1/ping', (_, res) => {
 });
 
 app.post('/api/v1/saloon/:id/book', (req, res) => {
-  const { id } = req.params;
-  const { serviceIds, booking } = req.body;
+  const { id: saloonId } = req.params;
+  const { serviceIds, booking: date } = req.body;
 
   const CREATE_BOOKING_QUERY = `
     mutation MyMutation {
       insertBooking(
         objects: {
-          date: "${booking}"
+          date: "${date}"
           status: "created"
-          saloonId: ${id}
+          saloonId: ${saloonId}
           serviceIds: "${serviceIds.map((id) => id).join(',')}"
         }
       ) {
@@ -44,17 +51,20 @@ app.post('/api/v1/saloon/:id/book', (req, res) => {
     .then(async (response) => {
       const bookingId = response.data?.data?.insertBooking?.returning?.[0]?.id;
 
-      const outcome = await zbc.createProcessInstanceWithResult({
-        bpmnProcessId: 'new-booking',
-        requestTimeout: Duration.seconds.of(120),
-        variables: {
-          bookingId,
-          saloonId: id,
-          date: booking,
-        },
+      await producer.send({
+        topic: 'verify-booking',
+        messages: [
+          {
+            key: String(bookingId),
+            value: JSON.stringify({
+              saloonId,
+              date,
+            }),
+          },
+        ],
       });
 
-      res.json({ outcome, bookingId });
+      res.json({ bookingId });
     })
     .catch((error) => {
       res.status(400).end();
@@ -62,113 +72,140 @@ app.post('/api/v1/saloon/:id/book', (req, res) => {
     });
 });
 
-const confirmWorker = zbc.createWorker({
-  taskType: 'confirm-booking',
-  taskHandler: async (job) => {
-    const { id } = job.variables;
+const admin = kafka.admin();
+await admin.connect();
+await admin.createTopics({
+  topics: [
+    {
+      topic: 'verify-booking',
+      numPartitions: 1,
+      replicationFactor: 1,
+    },
+    {
+      topic: 'decline-booking',
+      numPartitions: 1,
+      replicationFactor: 1,
+    },
+    {
+      topic: 'approve-booking',
+      numPartitions: 1,
+      replicationFactor: 1,
+    },
+  ],
+});
+await admin.disconnect();
 
-    const CONFIRM_BOOKING_QUERY = `
-      mutation ConfirmBookingMutation {
-        updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "approved"}) {
-          id
-          saloonId
-        }
-      }
-    `;
-
-    // update booking state
-    return await axios
-      .post(DATA_SERVICE_URL, {
-        query: CONFIRM_BOOKING_QUERY,
-      })
-      .then(() => {
-        return job.complete();
-      })
-      .catch((error) => {
-        console.log(error);
-
-        confirmWorker.log(error);
-
-        return job.error();
-      });
-  },
+const consumer = kafka.consumer({
+  groupId: 'saloon-service-consumer',
 });
 
-const rejectWorker = zbc.createWorker({
-  taskType: 'reject-booking',
-  taskHandler: async (job) => {
-    const { id } = job.variables;
+await consumer.connect();
+await consumer.subscribe({
+  topics: ['verify-booking', 'approve-booking', 'decline-booking'],
+});
 
-    const REJECT_BOOKING_QUERY = `
-        mutation RejectBookingMutation {
-          updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "rejected"}) {
-            id
+await consumer.run({
+  eachMessage: async ({ message, topic }) => {
+    if (topic === 'approve-booking') {
+      const bookingId = Number(message.key.toString());
+
+      const CONFIRM_BOOKING_QUERY = `
+          mutation ConfirmBookingMutation {
+            updateBookingByPk(pkColumns: {id: ${bookingId}}, _set: {status: "approved"}) {
+              id
+              saloonId
+            }
           }
-        }
-      `;
+        `;
 
-    return await axios
-      .post(DATA_SERVICE_URL, {
-        query: REJECT_BOOKING_QUERY,
-      })
-      .then(() => {
-        return job.complete();
-      })
-      .catch((error) => {
-        console.log(error);
+      // update booking state
+      return await axios
+        .post(DATA_SERVICE_URL, {
+          query: CONFIRM_BOOKING_QUERY,
+        })
+        .then(() => {
+          return producer.send({
+            topic: 'approve-notification',
+            messages: [message],
+          });
+        })
+        .catch((error) => {
+          console.log(error);
 
-        rejectWorker.log(error);
+          return producer.send({
+            topic: 'decline-notification',
+            messages: [message],
+          });
+        });
+    } else if (topic === 'decline-booking') {
+      const bookingId = Number(message.key.toString());
 
-        return job.error();
-      });
-  },
-});
+      const REJECT_BOOKING_QUERY = `
+          mutation RejectBookingMutation {
+            updateBookingByPk(pkColumns: {id: ${bookingId}}, _set: {status: "rejected"}) {
+              id
+            }
+          }
+        `;
 
-const verifyWorker = zbc.createWorker({
-  taskType: 'verify-booking',
-  taskHandler: async (job) => {
-    const { id, date } = job.variables;
+      return await axios
+        .post(DATA_SERVICE_URL, {
+          query: REJECT_BOOKING_QUERY,
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          return producer.send({
+            topic: 'decline-notification',
+            messages: [message],
+          });
+        });
+    } else if (topic === 'verify-booking') {
+      const { date } = JSON.parse(message.value.toString());
+      const bookingId = Number(message.key.toString());
 
-    verifyWorker.log('Verifying booking', id);
-
-    // compare two dates
-    const today = new Date();
-    const bookingDate = new Date(date);
-    if (today > bookingDate) {
-      return job.complete({
-        valid: false,
-      });
-    }
-
-    const VERIFY_BOOKING_QUERY = `
-      mutation VerifyBookingMutation {
-        updateBookingByPk(pkColumns: {id: ${id}}, _set: {status: "verified"}) {
-          id
-        }
+      const today = new Date();
+      const bookingDate = new Date(date);
+      if (today > bookingDate) {
+        return await producer.send({
+          topic: 'decline-booking',
+          messages: [message],
+        });
       }
-    `;
 
-    return await axios
-      .post(DATA_SERVICE_URL, {
-        query: VERIFY_BOOKING_QUERY,
-      })
-      .then(() => {
-        return job.complete({
-          valid: true,
+      const VERIFY_BOOKING_QUERY = `
+          mutation VerifyBookingMutation {
+            updateBookingByPk(pkColumns: {id: ${bookingId}}, _set: {status: "verified"}) {
+              id
+            }
+          }
+        `;
+
+      return await axios
+        .post(DATA_SERVICE_URL, {
+          query: VERIFY_BOOKING_QUERY,
+        })
+        .then(() => {
+          return producer.send({
+            topic: 'approve-booking',
+            messages: [message],
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+
+          return producer.send({
+            topic: 'decline-booking',
+            messages: [message],
+          });
         });
-      })
-      .catch((error) => {
-        console.log(error);
-
-        verifyWorker.log(error);
-
-        return job.error({
-          valid: false,
-        });
-      });
+    }
   },
 });
 
-app.listen(port, () => {
+console.log('Kafka consumer is running');
+
+app.listen(port, async () => {
   console.log(`Saloon service is running at http://localhost:${port}`);
 });

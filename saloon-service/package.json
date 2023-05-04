@@ -11,7 +11,7 @@
     "cors": "^2.8.5",
     "graphql": "^16.6.0",
     "graphqurl": "^1.0.1",
-    "zeebe-node": "^8.2.0"
+    "kafkajs": "^2.2.4"
   },
   "scripts": {
     "dev": "nodemon ./server.js",

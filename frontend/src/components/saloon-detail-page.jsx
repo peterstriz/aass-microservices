@@ -54,7 +54,6 @@ export function SaloonDetailPage() {
         serviceIds: selectedServices,
       })
       .then(({ data }) => {
-        window.open(data, '_blank');
         navigate(`/booking-success`);
       })
       .catch((error) => {
